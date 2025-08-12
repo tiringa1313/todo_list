@@ -26,7 +26,10 @@ class TodoListField extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return ValueListenableBuilder<bool>(
+      // Escuta mudanças em obscureTextVN (ex: clicou no olho)
       valueListenable: obscureTextVN,
+
+      // Toda vez que obscureTextVN.value mudar, esse builder é executado
       builder: (_, obscureTextValue, child) {
         return TextFormField(
           controller: controller,
@@ -39,26 +42,29 @@ class TodoListField extends StatelessWidget {
               borderRadius: BorderRadius.circular(30),
               borderSide: BorderSide(color: Colors.red),
             ),
-            isDense: true, // deixa os campos mais compactos
+            isDense: true, // deixa mais compacto
+            // Define o ícone final do campo (olhinho ou personalizado)
             suffixIcon:
                 this.suffixIconButton ??
                 (obscureText == true
                     ? IconButton(
                         onPressed: () {
+                          // Inverte o valor (mostra/oculta senha)
                           obscureTextVN.value = !obscureTextValue;
                         },
                         icon: Icon(
                           !obscureTextValue
-                              ? TodoListIcons.eye_slash
-                              : TodoListIcons.eye,
-
+                              ? TodoListIcons
+                                    .eye_slash // senha visível
+                              : TodoListIcons.eye, // senha oculta
                           size: 15,
                         ),
                       )
                     : null),
           ),
-          obscureText:
-              obscureTextValue, // deixa o campo de senha com asteriscos
+
+          // Mostra texto oculto ou não conforme obscureTextValue
+          obscureText: obscureTextValue,
         );
       },
     );

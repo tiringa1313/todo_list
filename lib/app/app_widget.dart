@@ -19,6 +19,8 @@ class _AppWidgetState extends State<AppWidget> {
   @override
   void initState() {
     super.initState();
+    // Chamar autenticacao do Firebase
+
     //Adiciona sqliteAdmConnection como observador do ciclo de vida do app:
     // como reagir durante pausas, fechamentos do app
     WidgetsBinding.instance?.addObserver(sqliteAdmConnection);
