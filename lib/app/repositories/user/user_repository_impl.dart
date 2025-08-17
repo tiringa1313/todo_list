@@ -1,4 +1,5 @@
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter/foundation.dart'; // kDebugMode, debugPrint
 import 'package:todo_list_provider/app/repositories/user/user_repository.dart';
 
 // Exceção simples para sua camada de UI
@@ -23,28 +24,29 @@ class UserRepositoryImpl implements UserRepository {
         password: password,
       );
       return credential.user;
-    } on FirebaseAuthException catch (e, s) {
-      // logs opcionais
-      // ignore: avoid_print
-      print('FirebaseAuthException(register): ${e.code}\n$s');
-
-      if (e.code == 'email-already-in-use') {
-        throw AuthException(
-          message:
-              'E-mail já cadastrado. Tente fazer login ou use "Esqueci minha senha".',
-        );
-      } else if (e.code == 'invalid-email') {
-        throw AuthException(message: 'E-mail inválido.');
-      } else if (e.code == 'weak-password') {
-        throw AuthException(message: 'Senha fraca. Use ao menos 6 caracteres.');
-      } else {
-        throw AuthException(
-          message: 'Não foi possível criar sua conta. Tente novamente.',
-        );
+    } on FirebaseAuthException catch (e) {
+      if (kDebugMode) {
+        debugPrint('Auth error (register): ${e.code}');
       }
-    } catch (e, s) {
-      // ignore: avoid_print
-      print('Erro inesperado(register): $e\n$s');
+
+      switch (e.code) {
+        case 'email-already-in-use':
+          throw AuthException(
+            message:
+                'E-mail já cadastrado. Tente fazer login ou use "Esqueci minha senha".',
+          );
+        case 'invalid-email':
+          throw AuthException(message: 'E-mail inválido.');
+        case 'weak-password':
+          throw AuthException(
+            message: 'Senha fraca. Use ao menos 6 caracteres.',
+          );
+        default:
+          throw AuthException(
+            message: e.message ?? 'Não foi possível criar sua conta.',
+          );
+      }
+    } catch (_) {
       throw AuthException(
         message: 'Ocorreu um erro inesperado. Tente novamente.',
       );
