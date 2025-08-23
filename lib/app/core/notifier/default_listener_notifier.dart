@@ -1,43 +1,81 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_overlay_loader/flutter_overlay_loader.dart';
-import 'package:todo_list_provider/app/core/notifier/default_change_notifier.dart';
-import 'package:todo_list_provider/app/core/ui/messages.dart';
+import 'default_change_notifier.dart';
+import '../ui/messages.dart';
+
+// Tipagens
+typedef SuccessCallback =
+    void Function(
+      DefaultChangeNotifier notifier,
+      DefaultListenerNotifier listenerInstance,
+    );
+typedef ErrorCallback =
+    void Function(
+      String message,
+      DefaultChangeNotifier notifier,
+      DefaultListenerNotifier listenerInstance,
+    );
+typedef InfoCallback =
+    void Function(
+      String message,
+      DefaultChangeNotifier notifier,
+      DefaultListenerNotifier listenerInstance,
+    );
+typedef EverCallback =
+    void Function(
+      DefaultChangeNotifier notifier,
+      DefaultListenerNotifier listenerInstance,
+    );
 
 class DefaultListenerNotifier {
   final DefaultChangeNotifier changeNotifier;
-
   VoidCallback? _internalListener;
 
   DefaultListenerNotifier({required this.changeNotifier});
 
   void listener({
     required BuildContext context,
-    VoidCallback? successCallback,
-    void Function(String message)? errorCallback,
+    SuccessCallback? successCallback,
+    ErrorCallback? errorCallback,
+    InfoCallback? infoCallback,
+    EverCallback? everCallback,
   }) {
     _internalListener = () {
-      // Loading
+      // Loading (protege hide/show)
       if (changeNotifier.loading) {
         Loader.show(context);
       } else {
-        Loader.hide();
+        try {
+          Loader.hide();
+        } catch (_) {
+          // ignora: algumas libs estouram se não houver overlay aberto
+        }
       }
 
-      // Error
-      if (changeNotifier.hasError) {
-        final msg = changeNotifier.error ?? 'Erro interno';
-        errorCallback?.call(msg);
-        Messages.of(context).showError(msg);
-        // opcional: limpar erro depois de exibir
-        changeNotifier.setError(null);
+      // --- ERROR (sem '!' nunca) ---
+      final err = changeNotifier.error;
+      if (err != null && err.isNotEmpty) {
+        errorCallback?.call(err, changeNotifier, this);
+        Messages.of(context).showError(err);
+        changeNotifier.setError(null); // evita repetir
       }
 
-      // Success
+      // --- SUCCESS ---
       if (changeNotifier.isSuccess) {
-        successCallback?.call();
-        // opcional: resetar sucesso para não disparar de novo
-        changeNotifier.resetState();
+        successCallback?.call(changeNotifier, this);
+        changeNotifier.resetState(); // limpa success/erro
       }
+
+      // --- INFO (sem '!' nunca) ---
+      final info = changeNotifier.info;
+      if (info != null && info.isNotEmpty) {
+        infoCallback?.call(info, changeNotifier, this);
+        Messages.of(context).showInfo(info);
+        changeNotifier.setInfo(null); // evita repetir
+      }
+
+      // --- EVER/ALWAYS ---
+      everCallback?.call(changeNotifier, this);
     };
 
     changeNotifier.addListener(_internalListener!);

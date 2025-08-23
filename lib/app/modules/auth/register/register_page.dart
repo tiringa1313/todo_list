@@ -33,16 +33,29 @@ class _RegisterPageState extends State<RegisterPage> {
 
     _defaultListener.listener(
       context: context,
-      successCallback: () {
+      // opcional: roda a cada notifyListeners()
+      everCallback: (notifier, listenerInstance) {
+        // exemplo: logs/metricas se quiser
+        // if (notifier is RegisterController) { ... }
+      },
+      // chamado quando isSuccess == true
+      successCallback: (notifier, listenerInstance) async {
         if (!mounted) return;
+
+        // se houver uma rota anterior, volta; senão navega para /login
         if (Navigator.of(context).canPop()) {
           Navigator.of(context).pop();
         } else {
-          Navigator.of(context).pushNamed('/login'); // ajuste a rota
+          await Navigator.of(context).pushNamed('/login');
         }
+
+        // opcional: encerrar o listener depois do sucesso
+        // listenerInstance.dispose();
       },
-      // opcional
-      // errorCallback: (msg) { debugPrint(msg); },
+      // mostrar/logar erro opcionalmente (além do Messages.of já no notifier)
+      errorCallback: (msg, notifier, listenerInstance) {
+        debugPrint('Erro no cadastro: $msg');
+      },
     );
   }
 
@@ -51,7 +64,7 @@ class _RegisterPageState extends State<RegisterPage> {
     _emailEC.dispose();
     _passwordEC.dispose();
     _confirmPasswordEC.dispose();
-    _defaultListener.dispose(); // remove o listener
+    _defaultListener.dispose();
     super.dispose();
   }
 
